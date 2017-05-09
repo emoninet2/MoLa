@@ -118,6 +118,10 @@ void lcd_thread(void const *args) {
 }
  
 int main() {
+    lampRed.period_us(100);
+    lampGreen.period_us(100);
+    lampBlue.period_us(100);
+  
     setLampColor(0x000000);
     
     //Create a thread to execute the function led2_thread

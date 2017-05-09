@@ -160,4 +160,4 @@ BUILD/NUCLEO_F446RE/GCC_ARM/./main.o: main.cpp \
  mbed-os/platform/Callback.h mbed-os/platform/FunctionPointer.h \
  mbed-os/rtos/rtos.h NRF24L01p/NRF24L01p.h NRF24L01p/NRF24L01pDriver.h \
  NRF24L01p/port/NRF24L01pPort.h NRF24L01p/NRF24L01pRegisters.h \
- NRF24L01p/NRF24L01pConfig.h
+ NRF24L01p/NRF24L01pConfig.h LCD03/LCD03.h LCD03/port/LCD03Port.h

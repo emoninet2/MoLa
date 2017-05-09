@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
-//#include "LCD03/LCD03.h"
+#include "LCD03/LCD03.h"
 
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
@@ -13,7 +13,7 @@ NRF24L01p Radio;
 NRF24L01p::Payload_t TxPayload;
 NRF24L01p::Payload_t RxPayload;
 
-//LCD03 lcd(LCD03::LCD03_SERIAL,LCD03::LCD03_20_4,LCD03::LCD03_I2C_ADDRESS_0xc8);
+LCD03 lcd(LCD03::LCD03_SERIAL,LCD03::LCD03_20_4,LCD03::LCD03_I2C_ADDRESS_0xc8);
  
 PwmOut lampRed(PC_9);//PB_9
 PwmOut lampGreen(PB_8);//PC_9
@@ -110,9 +110,9 @@ void radio_thread(void const *args) {
  
 void lcd_thread(void const *args) {
     while (true) {
-        //lcd.backlight(1);
+        lcd.backlight(1);
         Thread::wait(1000);
-        //lcd.backlight(0);
+        lcd.backlight(0);
         Thread::wait(1000);
     }
 }

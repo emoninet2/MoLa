@@ -20,6 +20,100 @@ PwmOut lampGreen(PB_8);//PC_9
 PwmOut lampBlue(PB_9);//PB_8
  
 
+void lcd03_command_handler(int arg_count, char **args){
+	if(!strcmp(args[0], "lcd") ) {
+		if(!strcmp(args[1], "bl") ) {
+			if(!strcmp(args[2], "0")) {
+				lcd.backlight(0);
+			}
+			else if(!strcmp(args[2], "1")) {
+				lcd.backlight(1);
+			}
+		}
+		else if(!strcmp(args[1], "cs") ) {
+			lcd.clear_screen();
+		}
+		else if(!strcmp(args[1], "cl") ) {
+			lcd.clear_line(atoi(args[2]));
+		}
+		else if(!strcmp(args[1], "pc") ) {
+			int row = atoi(args[2]);
+			int col = atoi(args[3]);
+			lcd.set_cursor_coordinate(row,col);
+			lcd.print_string(args[4], 1);
+		}
+		else if(!strcmp(args[1], "pl") ) {
+			int line = atoi(args[2]);
+			if( (line>=1) && (line <=4)){
+				lcd.set_cursor_coordinate(line,1);
+				lcd.print_line(atoi(args[2]), args[3], strlen(args[3]));
+			}
+
+		}
+		else if(!strcmp(args[1], "cm") ) {
+			lcd.cursor_display_mode(LCD03::LCD03_CURSOR_DISP_t(atoi(args[2])));
+		}
+	}
+
+}
+
+bool charIsDelim(char c, char *delim){
+
+    char * pch = delim;
+    pch=strchr(delim,c);
+    
+    if((pch-delim)>=0){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+
+int parseString(char * s, int len,  char * delim, int maxTokens, char ** argv){
+    int argc ;
+       
+    int i;
+    bool removeWhiteSpace = 1;
+    for(i=0;i<len;i++){
+
+        if(  charIsDelim(s[i],delim)   && (removeWhiteSpace)  ){
+            s[i] = 0;
+        }
+
+        if(s[i] == '"' ){
+            s[i] = 0;
+            removeWhiteSpace = !removeWhiteSpace;
+        }
+        
+    }
+    
+    int start = 0;
+    argc = 0;
+    for(i=0;i<len;i++){
+        if(s[i] != 0){
+            start = i;
+            argv[argc++] = &s[i];
+            break;
+        }
+    }
+    
+    for(i=start+1;i<len;i++){
+        if( (s[i] != 0) && (s[i-1] == 0)  ){
+            argv[argc++] = &s[i];
+            if(argc > maxTokens){
+                break;
+            }
+        }
+    }
+    
+    
+    return argc;
+}
+
+
+
+
 void setLampColorFromStr(char *colorCodeStr){
     uint32_t colorCode;
     colorCode = strtol(colorCodeStr,NULL,16);
@@ -90,7 +184,16 @@ void radio_thread(void const *args) {
          
 
             if(RxPayload.pipe == 1){
-                printf("new message on pipe 1\r\n");
+                    printf("new message on pipe 1\r\n");
+		    char *str = (char*)RxPayload.data;
+		    char *tokenV[10];
+		    int n = parseString(str, strlen(str),  " -/," , 10, tokenV);
+		    int i;
+
+		    lcd03_command_handler(n,tokenV);
+		    //for(i=0;i<n;i++){
+		    //	printf("\ttoken %d --> %s\r\n", i, tokenV[i]);
+		    //}
             }
             if(RxPayload.pipe == 2){
                 printf("new message on pipe 2\r\n");
@@ -110,9 +213,9 @@ void radio_thread(void const *args) {
  
 void lcd_thread(void const *args) {
     while (true) {
-        lcd.backlight(1);
+        //lcd.backlight(1);
         Thread::wait(1000);
-        lcd.backlight(0);
+        //lcd.backlight(0);
         Thread::wait(1000);
     }
 }

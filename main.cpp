@@ -1,10 +1,10 @@
 #include "mbed.h"
-#include "rtos.h"
-#include "NRF24L01p/NRF24L01p.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
+
 #include "LCD03/LCD03.h"
+#include "NRF24L01p/NRF24L01p.h"
 
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
@@ -129,19 +129,18 @@ void setLampColor(uint32_t colorCode){
     lampGreen = (float) (((colorCode>>8)&0xFF) )/255;
     lampBlue = (float) (((colorCode>>0)&0xFF) )/255;
 }
- 
-void NRF24L01p_RadioReset(void){
 
+void NRF24L01p_RadioReset(){
 
-    Radio.RadioConfig.DataReadyInterruptEnabled = 0;
-    Radio.RadioConfig.DataSentInterruptFlagEnabled = 0;
-    Radio.RadioConfig.MaxRetryInterruptFlagEnabled = 0;
+    Radio.RadioConfig.DataReadyInterruptEnabled = 1;
+    Radio.RadioConfig.DataSentInterruptEnabled = 1;
+    Radio.RadioConfig.MaxRetryInterruptEnabled = 1;
     Radio.RadioConfig.Crc = NRF24L01p::CONFIG_CRC_16BIT;
     Radio.RadioConfig.AutoReTransmissionCount = 15;
     Radio.RadioConfig.AutoReTransmitDelayX250us = 15;
     Radio.RadioConfig.frequencyOffset = 2;
     Radio.RadioConfig.datarate = NRF24L01p::RF_SETUP_RF_DR_2MBPS;
-    Radio.RadioConfig.RfPower = NRF24L01p::RF_SETUP_RF_PWR_0DBM;
+    Radio.RadioConfig.RfPowerDb = NRF24L01p::RF_SETUP_RF_PWR_0DBM;
     Radio.RadioConfig.PllLock = 0;
     Radio.RadioConfig.ContWaveEnabled = 0;
     Radio.RadioConfig.FeatureDynamicPayloadEnabled = 1;
@@ -154,26 +153,27 @@ void NRF24L01p_RadioReset(void){
     Radio.RxPipeConfig[3].address = 0x6C616d7093;
     Radio.RxPipeConfig[4].address = 0x6C616d7094;
     Radio.RxPipeConfig[5].address = 0x6C616d7095;
-
+ 
     int i;
-   
     for(i=0;i<6;i++){
         Radio.RxPipeConfig[i].PipeEnabled = 1;
         Radio.RxPipeConfig[i].autoAckEnabled = 1;
         Radio.RxPipeConfig[i].dynamicPayloadEnabled = 1;
     }
+    
+    //Radio.Initialize(&RadioConfig, RxPipeConfig);
 
     Radio.Initialize();
-
 }
+
  
 void radio_thread(void const *args) {
     Thread::wait(500);
     printf("starting Radio\r\n");
     NRF24L01p_RadioReset();
-    while(1){
-	//printf("%#x %#x %#x\r\n",  Radio.read_register(0),  Radio.read_register(0x17), Radio.get_status());
 
+    while(1){
+	printf("%#x %#x %#x %#x %#x\r\n",  Radio.read_register(0),  Radio.read_register(0x17), Radio.get_status() , Radio.read_register(0x5), Radio.read_register(0x6) );
 
 	if(Radio.fifo_waiting(&Radio.RxFifo) > 0){
             printf("received data\r\n");
@@ -201,9 +201,10 @@ void radio_thread(void const *args) {
             }
         }
         Radio.process();
+
         //printf("%#x %#x %#x %#llx [%#llx]\r\n",  Radio.read_register(0),  Radio.read_register(0x17), Radio.get_status(), Radio.get_RX_pipe_address((NRF24L01p::pipe_t)1) , Radio.RxPipeConfig[1].address);
         Thread::wait(200);
-        Radio.hardwareCheck();
+        //Radio.hardwareCheck();
     }
     
     
@@ -212,6 +213,10 @@ void radio_thread(void const *args) {
 }
  
 void lcd_thread(void const *args) {
+	lcd.clear_screen();
+	lcd.set_cursor_coordinate(1,1);
+	lcd.print_line(1, "MoLa", strlen("MoLa"));
+
     while (true) {
         //lcd.backlight(1);
         Thread::wait(1000);
@@ -226,7 +231,6 @@ int main() {
     lampBlue.period_us(100);
   
     setLampColor(0x000000);
-    
     //Create a thread to execute the function led2_thread
     Thread thread(radio_thread);
     Thread thread2(lcd_thread);
@@ -241,4 +245,8 @@ int main() {
 	//setLampColor(0x0000FF );
 	//Thread::wait(1000);
     }
+
+    return 0;
 }
+
+
